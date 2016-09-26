@@ -136,7 +136,7 @@ var testPackageInfo = {
     googleapis_common_protos: {
       python: {
         version: '1.2.0',
-        next_version: '2.0.0'
+        next_version: '2.0.0dev'
       },
       ruby: {
         version: '3.0.0b1.1'
@@ -171,7 +171,7 @@ var testPackageInfo = {
       },
       python: {
         version: '0.15.0',
-        next_version: '0.16.0'
+        next_version: '0.16.0dev'
       },
       ruby: {
         version: '0.9.3'
@@ -183,7 +183,7 @@ var testPackageInfo = {
     auth: {
       python: {
         version: '0.4.1',
-        next_version: '0.5.0'
+        next_version: '0.5.0dev'
       },
       ruby: {
         version: '0.4.1'
@@ -408,6 +408,30 @@ describe('the nodejs package builder', function() {
       'nodejs/src/v2/index.js'
     ];
     var compareWithFixture = genFixtureCompareFunc(top, ['gax']);
+    var checkExpanded = function checkExpanded(next) {
+      var expandTasks = _.map(expanded, compareWithFixture);
+      async.parallel(expandTasks, next);
+    };
+    async.series([packager.nodejs.bind(null, opts), checkExpanded], done);
+  });
+
+  it('should construct a gax package for single service API', function(done) {
+    var packageInfo = _.cloneDeep(testPackageInfo);
+    // Specifies the style of package name / title name, which should be set in
+    // lib/api_repo.js
+    packageInfo.api.name = '@google-cloud/unittest';
+    packageInfo.api.titlename = 'Packager Unittest';
+    var opts = _.merge({
+      packageInfo: packageInfo,
+      top: path.join(top, 'nodejs')
+    }, {templateDir: path.join(__dirname, '..', 'templates', 'gax', 'nodejs')});
+    opts.mockApiFilesForTest = ['v2/foo_api.js'];
+    var expanded = [
+      'nodejs/package.json',
+      'nodejs/src/v2/index.js'
+    ];
+    var compareWithFixture = genFixtureCompareFunc(
+        top, ['gax', 'nodejs-single']);
     var checkExpanded = function checkExpanded(next) {
       var expandTasks = _.map(expanded, compareWithFixture);
       async.parallel(expandTasks, next);
